@@ -87,8 +87,49 @@ function startPeriodicRefresh(intervalMs = 1000 * 60 * 60) {
 
 // Initializes the WhatsApp client
 async function initializeWhatsApp() {
-    const authPath = path.resolve("./session-data/LocalAuth/main-session");
-    fs.mkdirSync(authPath, { recursive: true });
+    // const authPath = path.resolve("./session-data/LocalAuth/main-session");
+    // fs.mkdirSync(authPath, { recursive: true });
+
+    // const client = new Client({
+    //     authStrategy: new LocalAuth({
+    //         clientId: "main-session",
+    //         dataPath: "./session-data"
+    //     }),
+    //     puppeteer: {
+    //         executablePath: "/usr/bin/chromium",
+    //         headless: true,
+    //         args: [
+    //             "--no-sandbox",
+    //             "--disable-setuid-sandbox",
+    //             "--disable-dev-shm-usage",
+    //             "--disable-gpu",
+    //             "--single-process"
+    //         ]
+    //     }
+    // });
+
+    // Si existe, borramos el directorio de perfil para empezar "limpio"
+    const chromeProfilePath = "/tmp/whatsapp-bot-chrome-profile";
+    try {
+        if (fs.existsSync(chromeProfilePath)) {
+            // Elimina toda la carpeta y su contenido
+            fs.rmSync(chromeProfilePath, { recursive: true, force: true });
+        }
+    } catch (e) {
+        console.warn("No pude borrar el perfil de Chrome (no crítico):", e.message);
+    }
+
+    // Crear carpeta vacía para el perfil
+    fs.mkdirSync(chromeProfilePath, { recursive: true });
+    fs.chmodSync(chromeProfilePath, 0o700);
+
+    // Ruta al binario de Google Chrome Stable
+    const chromePath = "/usr/bin/google-chrome-stable";
+
+    // Verificamos que exista el binario
+    if (!fs.existsSync(chromePath)) {
+        throw new Error(`No encontré el ejecutable de Chrome en ${chromePath}`);
+    }
 
     const client = new Client({
         authStrategy: new LocalAuth({
@@ -96,14 +137,23 @@ async function initializeWhatsApp() {
             dataPath: "./session-data"
         }),
         puppeteer: {
-            executablePath: "/usr/bin/chromium",
+            executablePath: chromePath,
             headless: true,
+            // dumpio: true volcará stdout/stderr de Chrome a tu consola para depuración
+            dumpio: true,
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
                 "--disable-dev-shm-usage",
                 "--disable-gpu",
-                "--single-process"
+                "--single-process",
+                "--disable-infobars",
+                "--disable-background-timer-throttling",
+                "--disable-backgrounding-occluded-windows",
+                "--disable-renderer-backgrounding",
+                `--user-data-dir=${chromeProfilePath}`,
+                "--enable-logging",
+                "--v=1"
             ]
         }
     });
