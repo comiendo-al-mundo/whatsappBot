@@ -85,28 +85,10 @@ function startPeriodicRefresh(intervalMs = 1000 * 60 * 60) {
     }, intervalMs);
 }
 
+// Initializes the WhatsApp client
 async function initializeWhatsApp() {
-    if (whatsappClient) {
-        // Ya estamos inicializados: devolvemos la misma instancia
-        return whatsappClient;
-    }
-
-    // 1) Creamos un directorio temporal único en /tmp
-    const chromeProfilePath = fs.mkdtempSync("/tmp/whatsapp-bot-chrome-");
-
-    // (No hace falta borrarlo manualmente, mkdtempSync ya crea un folder vacío.)
-
-    // Ajustamos permisos para que solo root (o el usuario de PM2) pueda leer/escribir
-    fs.chmodSync(chromeProfilePath, 0o700);
-
-    // 2) Ubicación del binario de Chrome/Chromium
-    // (Aquí asumo que ya instalaste google-chrome-stable en /usr/bin/google-chrome-stable,
-    //  tal como en pasos previos.)
-    const chromePath = "/usr/bin/google-chrome-stable";
-
-    if (!fs.existsSync(chromePath)) {
-        throw new Error(`No encontré el ejecutable de Chrome en ${chromePath}`);
-    }
+    const authPath = path.resolve("./session-data/LocalAuth/main-session");
+    fs.mkdirSync(authPath, { recursive: true });
 
     const client = new Client({
         authStrategy: new LocalAuth({
@@ -114,20 +96,14 @@ async function initializeWhatsApp() {
             dataPath: "./session-data"
         }),
         puppeteer: {
-            executablePath: chromePath,
+            executablePath: "/usr/bin/chromium",
             headless: true,
-            dumpio: true, // para que vuelque stderr/stdout de Chromium a tus logs de PM2
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
                 "--disable-dev-shm-usage",
                 "--disable-gpu",
-                "--disable-infobars",
-                "--disable-background-timer-throttling",
-                "--disable-backgrounding-occluded-windows",
-                "--disable-renderer-backgrounding",
-                "--enable-logging",
-                "--v=1"
+                "--single-process"
             ]
         }
     });
@@ -151,9 +127,6 @@ async function initializeWhatsApp() {
         whatsappClient = client;
     });
 
-    await client.initialize();
-
-    // return new Promise((resolve, reject) => {
     // Listener for incoming messages
     client.on("message", async msg => {
         try {
@@ -210,13 +183,15 @@ async function initializeWhatsApp() {
         } catch (err) {
             console.error("Error handling incoming message:", err);
         }
-    });
 
-    // Listener for "ready" event to resolve the promise
-    client.on("ready", async () => {
-        resolve(client);
+        // Listener for "ready" event to resolve the promise
+        client.on("ready", async () => {
+            resolve(client);
+        });
+
+        // Start the initialization process
+        await client.initialize();
     });
-    // });
 }
 
 // Normalizes a phone number by removing all non-digit characters.
