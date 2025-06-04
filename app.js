@@ -13,9 +13,8 @@ const http = require("http");
         startPeriodicRefresh();
 
         // Initialize the WhatsApp client 
-        initializeWhatsApp()
-            .then(() => console.log("WhatsApp initialized."))
-            .catch(err => console.error("Error initializing WhatsApp:", err));
+        await initializeWhatsApp();
+        console.log("WhatsApp initialized.");
 
         const app = express();
         const port = 8080;
@@ -28,6 +27,7 @@ const http = require("http");
             console.log(`Server running on port ${port}`);
         });
 
+        // Routes
         const whatsappRoute = require("./whatsappRoute");
         app.use("/api", [whatsappRoute]);
     } catch (error) {
