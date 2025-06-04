@@ -1,6 +1,7 @@
 "use strict";
 
 // External packages
+require("dotenv").config();
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 const fs = require("fs");
@@ -18,16 +19,22 @@ let whatsappClient = null;
 const SPREADSHEET_ID = "1ntkhFRdzw6-xDQWIVOhd-Z0_Afl10qsj69ZHyY6fpYI";
 
 // Phone number range
-const PHONE_COLUMN_RANGE = "Hoja 1!N2:N";
+const PHONE_COLUMN_RANGE = "Hoja 1!P2:P";
 
 // Path to the Service Account JSON
-const SERVICE_ACCOUNT_FILE = path.resolve(__dirname, "cloudStorageKeys.json");
+const SERVICE_ACCOUNT_FILE = process.env.SERVICE_ACCOUNT_FILE || path.resolve(__dirname, "cloudStorageKeys.json");
 
 // In-memory cache of allowed phone‐numbers (just digits, no “@c.us”)
 let allowedNumbers = new Set();
 
 async function loadAllowedNumbersFromSheet() {
     try {
+        if (!fs.existsSync(SERVICE_ACCOUNT_FILE)) {
+            throw new Error(
+                `No se encontró el fichero de credenciales en ${SERVICE_ACCOUNT_FILE}`
+            );
+        }
+
         // Load service account credentials
         const auth = new google.auth.GoogleAuth({
             keyFile: SERVICE_ACCOUNT_FILE,
