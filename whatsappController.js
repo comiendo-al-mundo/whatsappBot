@@ -86,6 +86,11 @@ function startPeriodicRefresh(intervalMs = 1000 * 60 * 60) {
 }
 
 async function initializeWhatsApp() {
+    if (whatsappClient) {
+        // Ya estamos inicializados: devolvemos la misma instancia
+        return whatsappClient;
+    }
+
     // 1) Creamos un directorio temporal único en /tmp
     const chromeProfilePath = fs.mkdtempSync("/tmp/whatsapp-bot-chrome-");
 
@@ -117,7 +122,6 @@ async function initializeWhatsApp() {
                 "--disable-setuid-sandbox",
                 "--disable-dev-shm-usage",
                 "--disable-gpu",
-                "--single-process",
                 "--disable-infobars",
                 "--disable-background-timer-throttling",
                 "--disable-backgrounding-occluded-windows",
@@ -150,73 +154,70 @@ async function initializeWhatsApp() {
 
     await client.initialize();
 
-    return new Promise((resolve, reject) => {
-        // Listener for incoming messages
-        client.on("message", async msg => {
-            try {
-                // Now normalize to just digits
-                const normalizedFrom = normalizeNumber((msg.from || "").replace(/@c\.us$/, ""));
+    // return new Promise((resolve, reject) => {
+    // Listener for incoming messages
+    client.on("message", async msg => {
+        try {
+            // Now normalize to just digits
+            const normalizedFrom = normalizeNumber((msg.from || "").replace(/@c\.us$/, ""));
 
-                // If not in allowedNumbers, bail out
-                if (!allowedNumbers.has(normalizedFrom)) {
-                    console.log(`Ignoring message from ${normalizedFrom}, not in allowedNumbers.`);
-                    return;
-                }
-
-                // Extract basic info
-                const from = msg.from;
-                const body = msg.body;
-                const tsSeconds = msg.timestamp;
-                const timestamp = new Date(tsSeconds * 1000).toISOString();
-
-                // Get history from the last 48 hours (up to 200 messages)
-                const chat = await whatsappClient.getChatById(from);
-
-                // Fetch the last 200 messages (the API doesn't filter by date directly)
-                const fetched = await chat.fetchMessages({ limit: 200 });
-                const fortyEightHoursAgo = Date.now() - 48 * 3600 * 1000;
-
-                // Filter messages whose timestamp is within the last 48 hours
-                const recentHistory = fetched
-                    .filter(m => (m.timestamp * 1000) >= fortyEightHoursAgo)
-                    .map(m => ({
-                        from: m.from,
-                        body: m.body,
-                        timestamp: new Date(m.timestamp * 1000).toISOString()
-                    }));
-
-                // Build the payload
-                const payload = {
-                    from,
-                    body,
-                    timestamp,
-                    history: recentHistory
-                };
-
-                // Send the POST to your backend endpoint
-                await axios.post(
-                    "https://api.comiendoalmundo.com/api/whatsapp/receivedMessage",
-                    payload,
-                    {
-                        headers: { "Content-Type": "application/json" },
-                        timeout: 8000
-                    }
-                );
-
-                console.log(`Incoming message from ${from} forwarded to backend.`);
-            } catch (err) {
-                console.error("Error handling incoming message:", err);
+            // If not in allowedNumbers, bail out
+            if (!allowedNumbers.has(normalizedFrom)) {
+                console.log(`Ignoring message from ${normalizedFrom}, not in allowedNumbers.`);
+                return;
             }
-        });
 
-        // Listener for "ready" event to resolve the promise
-        client.on("ready", async () => {
-            resolve(client);
-        });
+            // Extract basic info
+            const from = msg.from;
+            const body = msg.body;
+            const tsSeconds = msg.timestamp;
+            const timestamp = new Date(tsSeconds * 1000).toISOString();
 
-        // Start the initialization process
-        client.initialize();
+            // Get history from the last 48 hours (up to 200 messages)
+            const chat = await whatsappClient.getChatById(from);
+
+            // Fetch the last 200 messages (the API doesn't filter by date directly)
+            const fetched = await chat.fetchMessages({ limit: 200 });
+            const fortyEightHoursAgo = Date.now() - 48 * 3600 * 1000;
+
+            // Filter messages whose timestamp is within the last 48 hours
+            const recentHistory = fetched
+                .filter(m => (m.timestamp * 1000) >= fortyEightHoursAgo)
+                .map(m => ({
+                    from: m.from,
+                    body: m.body,
+                    timestamp: new Date(m.timestamp * 1000).toISOString()
+                }));
+
+            // Build the payload
+            const payload = {
+                from,
+                body,
+                timestamp,
+                history: recentHistory
+            };
+
+            // Send the POST to your backend endpoint
+            await axios.post(
+                "https://api.comiendoalmundo.com/api/whatsapp/receivedMessage",
+                payload,
+                {
+                    headers: { "Content-Type": "application/json" },
+                    timeout: 8000
+                }
+            );
+
+            console.log(`Incoming message from ${from} forwarded to backend.`);
+        } catch (err) {
+            console.error("Error handling incoming message:", err);
+        }
     });
+
+    // Listener for "ready" event to resolve the promise
+    client.on("ready", async () => {
+        resolve(client);
+    });
+    // });
 }
 
 // Normalizes a phone number by removing all non-digit characters.
