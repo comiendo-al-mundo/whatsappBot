@@ -1,0 +1,59 @@
+2025/05/31-22:09:43.254 541c Reusing MANIFEST C:\Users\lucia\Project\cam\whatsappBot\session-data\session-main-session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/05/31-22:09:43.254 541c Recovering log #363
+2025/05/31-22:09:43.293 541c Reusing old log C:\Users\lucia\Project\cam\whatsappBot\session-data\session-main-session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/000363.log 
+2025/05/31-22:09:44.090 17f0 Compacting 1@1 + 6@2 files
+2025/05/31-22:09:44.144 17f0 Generated table #370@1: 51615 keys, 2224912 bytes
+2025/05/31-22:09:44.172 17f0 Generated table #371@1: 7388 keys, 2186247 bytes
+2025/05/31-22:09:44.217 17f0 Generated table #372@1: 25003 keys, 2238201 bytes
+2025/05/31-22:09:44.257 17f0 Generated table #373@1: 16292 keys, 2283768 bytes
+2025/05/31-22:09:44.309 17f0 Generated table #374@1: 24963 keys, 2277273 bytes
+2025/05/31-22:09:44.351 17f0 Generated table #375@1: 22510 keys, 2199093 bytes
+2025/05/31-22:09:44.351 17f0 Compacted 1@1 + 6@2 files => 13409494 bytes
+2025/05/31-22:09:44.351 17f0 compacted to: files[ 0 3 11 0 0 0 0 ]
+2025/05/31-22:09:44.351 17f0 Delete type=2 #352
+2025/05/31-22:09:44.352 17f0 Delete type=2 #353
+2025/05/31-22:09:44.352 17f0 Delete type=2 #354
+2025/05/31-22:09:44.352 17f0 Delete type=2 #355
+2025/05/31-22:09:44.352 17f0 Delete type=2 #356
+2025/05/31-22:09:44.352 17f0 Delete type=2 #357
+2025/05/31-22:09:44.352 17f0 Delete type=2 #365
+2025/05/31-22:09:44.737 17f0 Level-0 table #377: started
+2025/05/31-22:09:44.743 17f0 Level-0 table #377: 208478 bytes OK
+2025/05/31-22:09:44.743 17f0 Delete type=0 #363
+2025/05/31-22:09:44.744 17f0 Manual compaction at level-0 from '\x00*\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00+\x00\x00\x00' @ 0 : 0; will stop at '\x00+\x00\x00\x05' @ 1294760 : 1
+2025/05/31-22:09:44.744 17f0 Compacting 1@0 + 3@1 files
+2025/05/31-22:09:44.751 17f0 Generated table #378@0: 4160 keys, 39654 bytes
+2025/05/31-22:09:44.806 17f0 Generated table #379@0: 33458 keys, 2254818 bytes
+2025/05/31-22:09:44.862 17f0 Generated table #380@0: 57680 keys, 2222494 bytes
+2025/05/31-22:09:44.873 17f0 Generated table #381@0: 11073 keys, 251071 bytes
+2025/05/31-22:09:44.873 17f0 Compacted 1@0 + 3@1 files => 4768037 bytes
+2025/05/31-22:09:44.873 17f0 compacted to: files[ 0 4 11 0 0 0 0 ]
+2025/05/31-22:09:44.873 17f0 Delete type=2 #377
+2025/05/31-22:09:44.874 17f0 Manual compaction at level-0 from '\x00+\x00\x00\x05' @ 1294760 : 1 .. '\x00+\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/05/31-22:09:44.877 17f0 Level-0 table #383: started
+2025/05/31-22:09:44.885 17f0 Level-0 table #383: 449 bytes OK
+2025/05/31-22:09:44.886 17f0 Delete type=2 #366
+2025/05/31-22:09:44.886 17f0 Delete type=2 #367
+2025/05/31-22:09:44.886 17f0 Delete type=2 #368
+2025/05/31-22:09:44.886 17f0 Delete type=0 #376
+2025/05/31-22:09:44.887 17f0 Manual compaction at level-0 from '\x00+\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00,\x00\x00\x00' @ 0 : 0; will stop at '\x00+\x00\x00\x05' @ 1294793 : 0
+2025/05/31-22:09:44.887 17f0 Compacting 1@0 + 4@1 files
+2025/05/31-22:09:44.893 17f0 Generated table #384@0: 4164 keys, 39696 bytes
+2025/05/31-22:09:44.942 17f0 Generated table #385@0: 33458 keys, 2254818 bytes
+2025/05/31-22:09:44.993 17f0 Generated table #386@0: 57680 keys, 2222494 bytes
+2025/05/31-22:09:45.003 17f0 Generated table #387@0: 11071 keys, 251001 bytes
+2025/05/31-22:09:45.003 17f0 Compacted 1@0 + 4@1 files => 4768009 bytes
+2025/05/31-22:09:45.003 17f0 compacted to: files[ 0 4 11 0 0 0 0 ]
+2025/05/31-22:09:45.004 17f0 Delete type=2 #383
+2025/05/31-22:09:45.004 17f0 Manual compaction at level-0 from '\x00+\x00\x00\x05' @ 1294793 : 0 .. '\x00,\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/05/31-22:09:47.266 541c Compacting 1@1 + 1@2 files
+2025/05/31-22:09:47.323 541c Generated table #388@1: 51686 keys, 2224733 bytes
+2025/05/31-22:09:47.335 541c Generated table #389@1: 6 keys, 2131 bytes
+2025/05/31-22:09:47.335 541c Compacted 1@1 + 1@2 files => 2226864 bytes
+2025/05/31-22:09:47.336 541c compacted to: files[ 0 3 12 0 0 0 0 ]
+2025/05/31-22:09:47.336 541c Delete type=2 #370
+2025/05/31-22:09:47.336 541c Delete type=2 #378
+2025/05/31-22:09:47.336 541c Delete type=2 #379
+2025/05/31-22:09:47.336 541c Delete type=2 #380
+2025/05/31-22:09:47.336 541c Delete type=2 #381
+2025/05/31-22:09:47.336 541c Delete type=2 #384
