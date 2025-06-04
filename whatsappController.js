@@ -126,7 +126,6 @@ async function initializeWhatsApp() {
                 "--disable-background-timer-throttling",
                 "--disable-backgrounding-occluded-windows",
                 "--disable-renderer-backgrounding",
-                `--user-data-dir=${chromeProfilePath}`, // cada arranque, carpeta única
                 "--enable-logging",
                 "--v=1"
             ]
