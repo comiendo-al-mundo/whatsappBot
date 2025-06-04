@@ -24,6 +24,9 @@ const PHONE_COLUMN_RANGE = "Hoja 1!P2:P";
 // Path to the Service Account JSON
 const SERVICE_ACCOUNT_FILE = process.env.SERVICE_ACCOUNT_FILE || path.resolve(__dirname, "cloudStorageKeys.json");
 
+// Path to the session data
+const SESSION_DIR = path.resolve(__dirname, "session-data");
+
 // In-memory cache of allowed phone‐numbers (just digits, no “@c.us”)
 let allowedNumbers = new Set();
 
@@ -91,11 +94,12 @@ async function initializeWhatsApp() {
         try {
             const authPath = path.resolve("./session-data/LocalAuth/main-session");
             fs.mkdirSync(authPath, { recursive: true });
+            fs.mkdirSync(SESSION_DIR, { recursive: true });
 
             const client = new Client({
                 authStrategy: new LocalAuth({
                     clientId: "main-session",
-                    dataPath: "./session-data"
+                    dataPath: SESSION_DIR
                 }),
                 puppeteer: {
                     executablePath: "/usr/bin/chromium",
