@@ -108,6 +108,7 @@ sudo mkdir -p "$TARGET_DIR"
 sudo chown "$USER:$USER" "$TARGET_DIR"
 git clone "$REPO_URL" "$TARGET_DIR"
 
+sudo chown -R "$USER:$USER" "$TARGET_DIR"
 # --------------------------------------------------------
 # 7) CREAR FICHERO .env CON LA RUTA DE LAS CREDENCIALES
 # --------------------------------------------------------
@@ -128,6 +129,8 @@ cd "$TARGET_DIR"
 echo "📦 Instalando dependencias npm en modo producción..."
 npm install --production
 
+sudo chown -R "$USER:$USER" "$TARGET_DIR"
+
 # --------------------------------------------------------
 # 9) CONFIGURAR LA CARPETA session-data
 # --------------------------------------------------------
@@ -135,6 +138,7 @@ npm install --production
 echo "📁 Creando carpeta session-data con permisos correctos..."
 mkdir -p "${TARGET_DIR}/session-data"
 sudo chown -R "$USER:$USER" "${TARGET_DIR}/session-data"
+chmod 700 "${TARGET_DIR}/session-data"
 
 # --------------------------------------------------------
 # 10) CREAR O MODIFICAR start-bot.sh PARA QUE LEA .env
@@ -159,7 +163,7 @@ cd "$TARGET_DIR"
 
 # 11.1) Iniciar el bot por primera vez
 echo "🚀 Iniciando el bot con pm2..."
-pm2 start start-bot.sh --name whatsapp-bot
+pm2 start start-bot.sh --name whatsapp-bot --cwd "$TARGET_DIR"
 
 # 11.2) Guardar configuración de pm2 para que se reinicie tras reboot
 echo "💾 Guardando configuración de pm2..."

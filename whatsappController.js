@@ -26,6 +26,7 @@ const SERVICE_ACCOUNT_FILE = process.env.SERVICE_ACCOUNT_FILE || path.resolve(__
 
 // Path to the session data
 const SESSION_DIR = path.resolve(__dirname, "session-data");
+const AUTH_DIR = path.resolve(SESSION_DIR, "LocalAuth", "main-session");
 
 // In-memory cache of allowed phone‐numbers (just digits, no “@c.us”)
 let allowedNumbers = new Set();
@@ -92,8 +93,7 @@ function startPeriodicRefresh(intervalMs = 1000 * 60 * 60) {
 async function initializeWhatsApp() {
     return new Promise((resolve, reject) => {
         try {
-            const authPath = path.resolve("./session-data/LocalAuth/main-session");
-            fs.mkdirSync(authPath, { recursive: true });
+            fs.mkdirSync(AUTH_DIR, { recursive: true });
             fs.mkdirSync(SESSION_DIR, { recursive: true });
 
             const client = new Client({
