@@ -16,7 +16,7 @@ const sheets = google.sheets("v4");
 let whatsappClient = null;
 
 // Sheet
-const SPREADSHEET_ID = "1ntkhFRdzw6-xDQWIVOhd-Z0_Afl10qsj69ZHyY6fpYI";
+const SPREADSHEET_ID = "1xYh2ib46cH0tvfCa86UT-7Ww59agqHydlR7r9iEiEhw";
 
 // Phone number range
 const PHONE_COLUMN_RANGE = "Hoja 1!P2:P";
