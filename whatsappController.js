@@ -85,48 +85,20 @@ function startPeriodicRefresh(intervalMs = 1000 * 60 * 60) {
     }, intervalMs);
 }
 
-// Initializes the WhatsApp client
 async function initializeWhatsApp() {
-    // const authPath = path.resolve("./session-data/LocalAuth/main-session");
-    // fs.mkdirSync(authPath, { recursive: true });
+    // 1) Creamos un directorio temporal único en /tmp
+    const chromeProfilePath = fs.mkdtempSync("/tmp/whatsapp-bot-chrome-");
 
-    // const client = new Client({
-    //     authStrategy: new LocalAuth({
-    //         clientId: "main-session",
-    //         dataPath: "./session-data"
-    //     }),
-    //     puppeteer: {
-    //         executablePath: "/usr/bin/chromium",
-    //         headless: true,
-    //         args: [
-    //             "--no-sandbox",
-    //             "--disable-setuid-sandbox",
-    //             "--disable-dev-shm-usage",
-    //             "--disable-gpu",
-    //             "--single-process"
-    //         ]
-    //     }
-    // });
+    // (No hace falta borrarlo manualmente, mkdtempSync ya crea un folder vacío.)
 
-    // Si existe, borramos el directorio de perfil para empezar "limpio"
-    const chromeProfilePath = "/tmp/whatsapp-bot-chrome-profile";
-    try {
-        if (fs.existsSync(chromeProfilePath)) {
-            // Elimina toda la carpeta y su contenido
-            fs.rmSync(chromeProfilePath, { recursive: true, force: true });
-        }
-    } catch (e) {
-        console.warn("No pude borrar el perfil de Chrome (no crítico):", e.message);
-    }
-
-    // Crear carpeta vacía para el perfil
-    fs.mkdirSync(chromeProfilePath, { recursive: true });
+    // Ajustamos permisos para que solo root (o el usuario de PM2) pueda leer/escribir
     fs.chmodSync(chromeProfilePath, 0o700);
 
-    // Ruta al binario de Google Chrome Stable
+    // 2) Ubicación del binario de Chrome/Chromium
+    // (Aquí asumo que ya instalaste google-chrome-stable en /usr/bin/google-chrome-stable,
+    //  tal como en pasos previos.)
     const chromePath = "/usr/bin/google-chrome-stable";
 
-    // Verificamos que exista el binario
     if (!fs.existsSync(chromePath)) {
         throw new Error(`No encontré el ejecutable de Chrome en ${chromePath}`);
     }
@@ -139,8 +111,7 @@ async function initializeWhatsApp() {
         puppeteer: {
             executablePath: chromePath,
             headless: true,
-            // dumpio: true volcará stdout/stderr de Chrome a tu consola para depuración
-            dumpio: true,
+            dumpio: true, // para que vuelque stderr/stdout de Chromium a tus logs de PM2
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
@@ -151,7 +122,7 @@ async function initializeWhatsApp() {
                 "--disable-background-timer-throttling",
                 "--disable-backgrounding-occluded-windows",
                 "--disable-renderer-backgrounding",
-                `--user-data-dir=${chromeProfilePath}`,
+                `--user-data-dir=${chromeProfilePath}`, // cada arranque, carpeta única
                 "--enable-logging",
                 "--v=1"
             ]
