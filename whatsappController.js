@@ -172,8 +172,7 @@ async function initializeWhatsApp() {
                     const isAllowed = SHEETS_CONFIG.some(config =>
                         config.allowedNumbers.has(normalizedFrom)
                     );
-                    console.log(normalizedFrom)
-                    console.log(SHEETS_CONFIG)
+
                     // If not in allowedNumbers, bail out
                     if (!isAllowed) {
                         console.log(`Ignoring message from ${normalizedFrom}, not in allowedNumbers.`);
@@ -261,7 +260,6 @@ async function sendMessage(req, res) {
     const { phone, message, spreadsheetId } = req.body;
 
     try {
-        console.log(spreadsheetId)
         await loadSpreadSheetFromMessage(spreadsheetId);
     } catch (err) {
         console.error("Error reloading specific sheet:", err);
