@@ -16,10 +16,20 @@ const sheets = google.sheets("v4");
 let whatsappClient = null;
 
 // Sheet
-const SPREADSHEET_ID = "1xYh2ib46cH0tvfCa86UT-7Ww59agqHydlR7r9iEiEhw";
-
-// Phone number range
-const PHONE_COLUMN_RANGE = "Hoja 1!P2:P";
+const SHEETS_CONFIG = [
+    {
+        name: "Potential Clients",
+        spreadsheetId: "1ntkhFRdzw6-xDQWIVOhd-Z0_Afl10qsj69ZHyY6fpYI",
+        range: "Hoja 1!N2:N",
+        allowedNumbers: new Set()
+    },
+    {
+        name: "Extended Potential clients",
+        spreadsheetId: "1xYh2ib46cH0tvfCa86UT-7Ww59agqHydlR7r9iEiEhw",
+        range: "Hoja 1!P2:P",
+        allowedNumbers: new Set()
+    },
+];
 
 // Path to the Service Account JSON
 const SERVICE_ACCOUNT_FILE = process.env.SERVICE_ACCOUNT_FILE || path.resolve(__dirname, "cloudStorageKeys.json");
@@ -28,15 +38,27 @@ const SERVICE_ACCOUNT_FILE = process.env.SERVICE_ACCOUNT_FILE || path.resolve(__
 const SESSION_DIR = path.resolve(__dirname, "session-data");
 const AUTH_DIR = path.resolve(SESSION_DIR, "LocalAuth", "main-session");
 
-// In-memory cache of allowed phone‐numbers (just digits, no “@c.us”)
-let allowedNumbers = new Set();
+// Load all allowed numbers from sheets
+async function loadAllowedNumbersFromAllSheets() {
+    for (let config of SHEETS_CONFIG) {
+        try {
+            await loadAllowedNumbersFromSheet(config);
+        } catch (err) {
+            console.error(`Error loading sheet '${config.name}':`, err);
+        }
+    }
+}
 
-async function loadAllowedNumbersFromSheet() {
+// Load allowed numbers from one sheet
+async function loadAllowedNumbersFromSheet(config) {
     try {
+        // Verify that config exists and has a valid spreadsheetId
+        if (!config || typeof config.spreadsheetId !== "string" || config.spreadsheetId.trim() === "") {
+            throw new Error(`Invalid configuration object: ${JSON.stringify(config)}`);
+        }
+
         if (!fs.existsSync(SERVICE_ACCOUNT_FILE)) {
-            throw new Error(
-                `No se encontró el fichero de credenciales en ${SERVICE_ACCOUNT_FILE}`
-            );
+            throw new Error(`Invalid configuration object: ${JSON.stringify(config)}`);
         }
 
         // Load service account credentials
@@ -48,18 +70,18 @@ async function loadAllowedNumbersFromSheet() {
         // Obtain an authenticated client
         const authClient = await auth.getClient();
 
+        // Clear existing cache
+        config.allowedNumbers.clear();
+
         // Use the client to call the Sheets API
         const response = await sheets.spreadsheets.values.get({
             auth: authClient,
-            spreadsheetId: SPREADSHEET_ID,
-            range: PHONE_COLUMN_RANGE,
+            spreadsheetId: config.spreadsheetId,
+            range: config.range,
         });
 
         // response.data.values is an array of rows, e.g. [[ "34600123456" ], [ "34900111222" ], …]
         const rows = response.data.values || [];
-
-        // Clear existing cache
-        allowedNumbers.clear();
 
         // Normalize and add each phone to the Set
         for (let row of rows) {
@@ -67,26 +89,32 @@ async function loadAllowedNumbersFromSheet() {
             if (typeof rawPhone === "string" && rawPhone.trim() !== "") {
                 const digits = normalizeNumber(rawPhone);
                 if (digits) {
-                    allowedNumbers.add(digits);
+                    config.allowedNumbers.add(digits);
                 }
             }
         }
-
-        console.log(`Loaded ${allowedNumbers.size} allowed phone(s) from Sheets.`);
+        console.log(`Loaded ${config.allowedNumbers.size} allowed phone(s) from ${config.name}. (ID: ${config.spreadsheetId})`);
     } catch (err) {
         console.error("Error loading allowed phone numbers from Google Sheets:", err);
     }
 }
 
-// Periodically refresh the list every hour
-function startPeriodicRefresh(intervalMs = 1000 * 60 * 60) {
-    // On startup, load once
-    loadAllowedNumbersFromSheet();
+// Auxiliar function to load the list
+async function loadSpreadSheetFromMessage(spreadsheetId) {
+    // If ID is not a non-empty string, do nothing
+    if (typeof spreadsheetId !== "string" || spreadsheetId.trim() === "") {
+        return false;
+    }
 
-    // Then schedule recurring refresh
-    setInterval(() => {
-        loadAllowedNumbersFromSheet();
-    }, intervalMs);
+    // Find the configuration object
+    const config = SHEETS_CONFIG.find(c => c.spreadsheetId === spreadsheetId.trim());
+    if (!config) {
+        throw new Error(`No configuration found for spreadsheetId '${spreadsheetId}'.`);
+    }
+
+    // Reload only that sheet
+    await loadAllowedNumbersFromSheet(config);
+    return true;
 }
 
 // Initializes the WhatsApp client
@@ -140,8 +168,13 @@ async function initializeWhatsApp() {
                     // Now normalize to just digits
                     const normalizedFrom = normalizeNumber((msg.from || "").replace(/@c\.us$/, ""));
 
+                    // We see if the input phone number is any of the allowed list
+                    const isAllowed = SHEETS_CONFIG.some(config =>
+                        config.allowedNumbers.has(normalizedFrom)
+                    );
+
                     // If not in allowedNumbers, bail out
-                    if (!allowedNumbers.has(normalizedFrom)) {
+                    if (!isAllowed) {
                         console.log(`Ignoring message from ${normalizedFrom}, not in allowedNumbers.`);
                         return;
                     }
@@ -193,11 +226,11 @@ async function initializeWhatsApp() {
             });
 
             client.initialize().catch(err => {
-                console.error("❌ Error arrancando client.initialize():", err);
+                console.error("Error starting client.initialize():", err);
                 reject(err);
             });
         } catch (err) {
-            console.error("❌ Excepción en initializeWhatsApp:", err);
+            console.error("Exception in initializeWhatsApp:", err);
             reject(err);
         }
     });
@@ -222,9 +255,19 @@ async function sendViaWhatsApp(number, message) {
     return whatsappClient.sendMessage(chatId, message);
 }
 
-// Express handler that receives req/res
-const sendMessage = async function (req, res) {
-    const { phone, message } = req.body;
+// Express handler when a message has to be sent
+async function sendMessage(req, res) {
+    const { phone, message, spreadsheetId } = req.body;
+
+    try {
+        await loadSpreadSheetFromMessage(spreadsheetId);
+    } catch (err) {
+        console.error("Error reloading specific sheet:", err);
+        return res.status(400).json({
+            success: false,
+            message: err.message
+        });
+    }
 
     // Validate that the parameters are provided and non-empty
     if (
@@ -251,10 +294,10 @@ const sendMessage = async function (req, res) {
             message: "Internal error sending WhatsApp message."
         });
     }
-};
+}
 
 module.exports = {
-    startPeriodicRefresh,
+    loadAllowedNumbersFromAllSheets,
     initializeWhatsApp,
     sendMessage
 };

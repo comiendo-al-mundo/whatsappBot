@@ -7,10 +7,10 @@ const http = require("http");
 
 (async () => {
     try {
-        const { initializeWhatsApp, startPeriodicRefresh } = require("./whatsappController");
+        const { initializeWhatsApp, loadAllowedNumbersFromAllSheets } = require("./whatsappController");
 
-        // Load the phone list once, and refresh hourly
-        startPeriodicRefresh();
+        // Load the phone list once
+        await loadAllowedNumbersFromAllSheets();
 
         // Initialize the WhatsApp client 
         await initializeWhatsApp();
