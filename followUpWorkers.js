@@ -1,17 +1,26 @@
 "use strict";
 
+// External packages
 const { Worker } = require("bullmq");
 const IORedis = require("ioredis");
-const { sendViaWhatsApp } = require("./whatsappController");
 
-const connection = new IORedis({ host: "127.0.0.1", port: 6379 });
+// Redis connection
+const redisOptions = {
+    host: process.env.REDIS_HOST || "127.0.0.1",
+    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+    maxRetriesPerRequest: null,
+};
+const connection = new IORedis(redisOptions);
+
+// Controllers
+const { sendViaWhatsApp } = require("./whatsappController");
 
 const worker = new Worker(
     "follow-up",
     async job => {
         const { phone, attempt } = job.data;
 
-        // Personalized text based on the time
+        // Customized text based on the time
         const texts = {
             24: "¡Hola! ¿Tienes alguna duda? Te escribo para recordarte…",
             48: "Seguimos a tu disposición si necesitas más información.",
@@ -26,5 +35,5 @@ const worker = new Worker(
 );
 
 worker.on("failed", (job, err) => {
-    console.error(`❌ Falló job ${job.id}:`, err);
+    console.error(`Job ${job.id} has failed:`, err);
 });
