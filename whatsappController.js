@@ -104,7 +104,7 @@ async function loadAllowedNumbersFromSheet(config) {
 }
 
 // Helper function to load the list and setup the reminders
-async function loadSpreadSheetFromMessage(spreadsheetId, phone) {
+async function loadSpreadSheetFromMessage(spreadsheetId, phone, templateId) {
     // If ID is a non-empty string, do nothing
     if (typeof spreadsheetId !== "string" || spreadsheetId.trim() === "") {
         cancelFollowUps(phone)
@@ -113,8 +113,13 @@ async function loadSpreadSheetFromMessage(spreadsheetId, phone) {
         return false;
     }
 
+    // Validate templateId
+    if (![0, 1, 2].includes(templateId)) {
+        return res.status(400).json({ success: false, message: "The templateId is invalid" });
+    }
+
     // We schedule the reminders
-    scheduleFollowUps(phone);
+    scheduleFollowUps(phone, templateId);
 
     // Find the configuration object
     const config = SHEETS_CONFIG.find(c => c.spreadsheetId === spreadsheetId.trim());
@@ -264,10 +269,10 @@ async function sendViaWhatsApp(number, message) {
 
 // Express handler when a message has to be sent
 async function sendMessage(req, res) {
-    const { phone, message, spreadsheetId } = req.body;
+    const { phone, message, spreadsheetId, templateId } = req.body;
 
     try {
-        await loadSpreadSheetFromMessage(spreadsheetId, phone);
+        await loadSpreadSheetFromMessage(spreadsheetId, phone, templateId);
     } catch (err) {
         console.error("Error reloading specific sheet:", err);
         return res.status(400).json({
