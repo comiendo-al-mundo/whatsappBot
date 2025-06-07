@@ -15,7 +15,6 @@ const sheets = google.sheets("v4");
 // Methods from another file
 const { scheduleFollowUps, cancelFollowUps } = require("./followUpQueue");
 
-
 // Whatsapp client
 let whatsappClient = null;
 
@@ -98,7 +97,7 @@ async function loadAllowedNumbersFromSheet(config) {
         for (let i = 0; i < phoneRows.length; i++) {
             const rawPhone = phoneRows[i]?.[0] || "";
             const rawActive = activeRows[i]?.[0] || "";
-            if (typeof rawPhone === "string" && rawPhone.trim() !== "" && rawActive.trim().toLowerCase() !== "inactivo") {
+            if (typeof rawPhone === "string" && rawPhone.trim() !== "" && rawActive.trim() === "") {
                 const digits = normalizeNumber(rawPhone);
                 if (digits) {
                     config.allowedNumbers.add(digits);
