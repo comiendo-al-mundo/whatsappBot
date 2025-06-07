@@ -25,14 +25,14 @@ const SHEETS_CONFIG = [
         name: "Potential Clients",
         spreadsheetId: "1ntkhFRdzw6-xDQWIVOhd-Z0_Afl10qsj69ZHyY6fpYI",
         phoneRange: "Hoja 1!N2:N",
-        activeRange: "Hoja 1!O2:O",
+        activeRange: "Hoja 1!S2:S",
         allowedNumbers: new Set()
     },
     {
         name: "Extended Potential clients",
         spreadsheetId: "1xYh2ib46cH0tvfCa86UT-7Ww59agqHydlR7r9iEiEhw",
         phoneRange: "Hoja 1!P2:P",
-        activeRange: "Hoja 1!O2:O",
+        activeRange: "Hoja 1!V2:V",
         allowedNumbers: new Set()
     },
 ];
