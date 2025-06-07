@@ -5,6 +5,9 @@ const cors = require("cors");
 const helmet = require("helmet");
 const http = require("http");
 
+// Fire the worker to read the follow-ups
+require("./followUpWorkers");
+
 (async () => {
     try {
         const { initializeWhatsApp, loadAllowedNumbersFromAllSheets } = require("./whatsappController");

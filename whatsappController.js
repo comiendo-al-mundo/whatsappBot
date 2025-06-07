@@ -12,6 +12,10 @@ const axios = require("axios");
 const { google } = require("googleapis");
 const sheets = google.sheets("v4");
 
+// Methods from another file
+const { scheduleFollowUps, cancelFollowUps } = require("./followUpQueue");
+
+
 // Whatsapp client
 let whatsappClient = null;
 
@@ -99,12 +103,18 @@ async function loadAllowedNumbersFromSheet(config) {
     }
 }
 
-// Auxiliar function to load the list
-async function loadSpreadSheetFromMessage(spreadsheetId) {
-    // If ID is not a non-empty string, do nothing
+// Helper function to load the list and setup the reminders
+async function loadSpreadSheetFromMessage(spreadsheetId, phone) {
+    // If ID is a non-empty string, do nothing
     if (typeof spreadsheetId !== "string" || spreadsheetId.trim() === "") {
+        cancelFollowUps(phone)
+            .then(() => console.log(`Cancelados follow-ups para ${phone}`))
+            .catch(err => console.error("Error cancelando follow-ups:", err));
         return false;
     }
+
+    // We schedule the reminders
+    scheduleFollowUps(phone);
 
     // Find the configuration object
     const config = SHEETS_CONFIG.find(c => c.spreadsheetId === spreadsheetId.trim());
@@ -257,7 +267,7 @@ async function sendMessage(req, res) {
     const { phone, message, spreadsheetId } = req.body;
 
     try {
-        await loadSpreadSheetFromMessage(spreadsheetId);
+        await loadSpreadSheetFromMessage(spreadsheetId, phone);
     } catch (err) {
         console.error("Error reloading specific sheet:", err);
         return res.status(400).json({
@@ -291,5 +301,6 @@ async function sendMessage(req, res) {
 module.exports = {
     loadAllowedNumbersFromAllSheets,
     initializeWhatsApp,
+    sendViaWhatsApp,
     sendMessage
 };

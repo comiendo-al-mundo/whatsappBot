@@ -87,7 +87,11 @@ sudo apt-get install -y \
     libappindicator3-1 \
     xdg-utils \
     ca-certificates \
-    fonts-liberation
+    fonts-liberation \
+    redis-server
+
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
 
 echo "✅ Chromium (vía Snap) y librerías para Puppeteer instaladas."
 
