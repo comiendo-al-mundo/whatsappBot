@@ -15,6 +15,7 @@ const connection = new IORedis(redisOptions);
 // Controllers
 const { sendViaWhatsApp } = require("./whatsappController");
 
+/*
 const worker = new Worker(
     "follow-up",
     async job => {
@@ -30,6 +31,28 @@ const worker = new Worker(
 
         await sendViaWhatsApp(phone, text);
         console.log(`Remainder at ${attempt} h send to ${phone}`);
+    },
+    { connection }
+);*/
+
+const TEST_PHONE = "34640616793";
+
+const worker = new Worker(
+    "follow-up",
+    async job => {
+        const { phone, attempt } = job.data;
+        if (phone !== TEST_PHONE) return;
+
+        // Mensajes de prueba para 1, 2 y 3 minutos
+        const texts = {
+            1: "🕐 Recordatorio de prueba a 1 minuto",
+            2: "🕑 Recordatorio de prueba a 2 minutos",
+            3: "🕒 Recordatorio de prueba a 3 minutos",
+        };
+        const text = texts[attempt] || texts[1];
+
+        await sendViaWhatsApp(phone, text);
+        console.log(`✅ Test reminder (${attempt} min) sent to ${phone}`);
     },
     { connection }
 );
