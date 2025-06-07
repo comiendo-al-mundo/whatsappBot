@@ -210,16 +210,13 @@ async function initializeWhatsApp() {
                     };
 
                     // Send the POST to your backend endpoint
-                    await axios.post(
-                        "https://api.comiendoalmundo.com/api/whatsapp/receivedMessage",
-                        payload,
-                        {
-                            headers: { "Content-Type": "application/json" },
-                            timeout: 8000
-                        }
-                    );
-
-                    console.log(`Incoming message from ${from} forwarded to backend.`);
+                    axios
+                        .post(
+                            "https://api.comiendoalmundo.com/api/whatsapp/receivedMessage",
+                            payload,
+                            { headers: { "Content-Type": "application/json" }, timeout: 8000 }
+                        ).then(() => console.log(`Incoming message from ${from} forwarded to backend.`))
+                        .catch(err => console.error("Error forwarding incoming message:", err.message));
                 } catch (err) {
                     console.error("Error handling incoming message:", err);
                 }
@@ -280,20 +277,15 @@ async function sendMessage(req, res) {
         });
     }
 
-    try {
-        // Call the internal function that sends via WhatsApp
-        await sendViaWhatsApp(phone, message);
-        return res.status(200).json({
-            success: true,
-            message: "Message sent successfully via WhatsApp."
-        });
-    } catch (err) {
-        console.error("Error in sendMessage:", err);
-        return res.status(500).json({
-            success: false,
-            message: "Internal error sending WhatsApp message."
-        });
-    }
+    // Call the internal function that sends via WhatsApp
+    sendViaWhatsApp(phone, message)
+        .then(() => console.log("Message sent successfully via WhatsApp."))
+        .catch(err => console.error("Internal error sending WhatsApp message."))
+
+    return res.status(200).json({
+        success: true,
+        message: "Message sent successfully via WhatsApp."
+    });
 }
 
 module.exports = {
