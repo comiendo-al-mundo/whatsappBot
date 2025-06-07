@@ -15,14 +15,14 @@ const connection = new IORedis(redisOptions);
 const followUpQueue = new Queue("follow-up", { connection });
 
 // Setup the reminder
-async function scheduleFollowUps(phone) {
-    for (const hours of [24, 48, 72]) {
+async function scheduleFollowUps(phone, name, templateId) {
+    for (const hours of [24]) {
         await followUpQueue.add(
             "send-reminder",
-            { phone, attempt: hours, templateId },
+            { phone, name, attempt: hours, templateId },
             {
                 delay: hours * 3600 * 1000,
-                jobId: `followup-${phone}-${hours}-${templateId}`,
+                jobId: `followup-${phone}-${hours}`,
                 removeOnComplete: true,
                 removeOnFail: true
             }
@@ -32,12 +32,10 @@ async function scheduleFollowUps(phone) {
 
 // Cancel the reminder
 async function cancelFollowUps(phone) {
-    for (const hours of [24, 48, 72]) {
-        for (const tid of [0, 1, 2]) {
-            const id = `followup-${phone}-${hours}-${tid}`;
-            const job = await followUpQueue.getJob(id);
-            if (job) await job.remove();
-        }
+    for (const hours of [24]) {
+        const id = `followup-${phone}-${hours}`;
+        const job = await followUpQueue.getJob(id);
+        if (job) await job.remove();
     }
 }
 

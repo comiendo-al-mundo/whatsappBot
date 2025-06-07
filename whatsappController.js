@@ -24,13 +24,15 @@ const SHEETS_CONFIG = [
     {
         name: "Potential Clients",
         spreadsheetId: "1ntkhFRdzw6-xDQWIVOhd-Z0_Afl10qsj69ZHyY6fpYI",
-        range: "Hoja 1!N2:N",
+        phoneRange: "Hoja 1!N2:N",
+        activeRange: "Hoja 1!O2:O",
         allowedNumbers: new Set()
     },
     {
         name: "Extended Potential clients",
         spreadsheetId: "1xYh2ib46cH0tvfCa86UT-7Ww59agqHydlR7r9iEiEhw",
-        range: "Hoja 1!P2:P",
+        phoneRange: "Hoja 1!P2:P",
+        activeRange: "Hoja 1!O2:O",
         allowedNumbers: new Set()
     },
 ];
@@ -78,19 +80,25 @@ async function loadAllowedNumbersFromSheet(config) {
         config.allowedNumbers.clear();
 
         // Use the client to call the Sheets API
-        const response = await sheets.spreadsheets.values.get({
+        const phoneResponse = await sheets.spreadsheets.values.get({
             auth: authClient,
             spreadsheetId: config.spreadsheetId,
-            range: config.range,
+            range: config.phoneRange,
         });
+        const phoneRows = phoneResponse.data.values || [];
 
-        // response.data.values is an array of rows, e.g. [[ "34600123456" ], [ "34900111222" ], …]
-        const rows = response.data.values || [];
+        const activeResponse = await sheets.spreadsheets.values.get({
+            auth: authClient,
+            spreadsheetId: config.spreadsheetId,
+            range: config.activeRange,
+        });
+        const activeRows = activeResponse.data.values || [];
 
         // Normalize and add each phone to the Set
-        for (let row of rows) {
-            const rawPhone = row[0];
-            if (typeof rawPhone === "string" && rawPhone.trim() !== "") {
+        for (let i = 0; i < phoneRows.length; i++) {
+            const rawPhone = phoneRows[i]?.[0] || "";
+            const rawActive = activeRows[i]?.[0] || "";
+            if (typeof rawPhone === "string" && rawPhone.trim() !== "" && rawActive.trim().toLowerCase() !== "inactivo") {
                 const digits = normalizeNumber(rawPhone);
                 if (digits) {
                     config.allowedNumbers.add(digits);
@@ -104,7 +112,7 @@ async function loadAllowedNumbersFromSheet(config) {
 }
 
 // Helper function to load the list and setup the reminders
-async function loadSpreadSheetFromMessage(spreadsheetId, phone, templateId) {
+async function loadSpreadSheetFromMessage(spreadsheetId, phone, name, templateId) {
     // If ID is a non-empty string, do nothing
     if (typeof spreadsheetId !== "string" || spreadsheetId.trim() === "") {
         cancelFollowUps(phone)
@@ -115,11 +123,11 @@ async function loadSpreadSheetFromMessage(spreadsheetId, phone, templateId) {
 
     // Validate templateId
     if (![0, 1, 2].includes(templateId)) {
-        return res.status(400).json({ success: false, message: "The templateId is invalid" });
+        return false;
     }
 
     // We schedule the reminders
-    scheduleFollowUps(phone, templateId);
+    scheduleFollowUps(phone, name, templateId);
 
     // Find the configuration object
     const config = SHEETS_CONFIG.find(c => c.spreadsheetId === spreadsheetId.trim());
@@ -269,10 +277,10 @@ async function sendViaWhatsApp(number, message) {
 
 // Express handler when a message has to be sent
 async function sendMessage(req, res) {
-    const { phone, message, spreadsheetId, templateId } = req.body;
+    const { phone, name, message, spreadsheetId, templateId } = req.body;
 
     try {
-        await loadSpreadSheetFromMessage(spreadsheetId, phone, templateId);
+        await loadSpreadSheetFromMessage(spreadsheetId, phone, name, templateId);
     } catch (err) {
         console.error("Error reloading specific sheet:", err);
         return res.status(400).json({
@@ -303,9 +311,30 @@ async function sendMessage(req, res) {
     });
 }
 
+// Function to reload a phone number
+async function reloadPhone(req, res) {
+    const { spreadsheetId, phone } = req.body;
+    if (!spreadsheetId || typeof phone !== "string") {
+        return res.status(400).json({ success: false, message: "SpreadsheetId and phone are compulsory" });
+    }
+
+    // We cancel all followup from this phone
+    await cancelFollowUps(phone);
+
+    // We upload the active values
+    const config = SHEETS_CONFIG.find(c => c.spreadsheetId === spreadsheetId.trim());
+    if (!config) {
+        return res.status(404).json({ success: false, message: "SpreadsheetId no configurado" });
+    }
+    await loadAllowedNumbersFromSheet(config);
+
+    return res.json({ success: true });
+}
+
 module.exports = {
     loadAllowedNumbersFromAllSheets,
     initializeWhatsApp,
     sendViaWhatsApp,
-    sendMessage
+    sendMessage,
+    reloadPhone
 };
