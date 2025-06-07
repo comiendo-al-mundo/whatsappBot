@@ -214,7 +214,7 @@ async function initializeWhatsApp() {
                         .post(
                             "https://api.comiendoalmundo.com/api/whatsapp/receivedMessage",
                             payload,
-                            { headers: { "Content-Type": "application/json" }, timeout: 8000 }
+                            { headers: { "Content-Type": "application/json" } }
                         ).then(() => console.log(`Incoming message from ${from} forwarded to backend.`))
                         .catch(err => console.error("Error forwarding incoming message:", err.message));
                 } catch (err) {
